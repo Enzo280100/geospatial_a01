@@ -1,0 +1,52 @@
+---
+title: |
+  **Geospatial Data Sciences and Economic Spatial Models**  
+  _Assignment 01_
+author: |
+  **1. Alejandro Delgado**  
+  **2. Enzo Infantes**  
+  **3. Tarang Kadyan**
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: False
+    code_download: true
+    number_sections: true
+---
+![](C:/Users/Enzo/Pictures/bse_logo.png){width=50%}
+
+# **Introducction**
+For this document, we are going to replicate maps in academic publications/working papers in economics. The main goal of this work is to put in practice the sf tools to work with vector data.
+
+# **Development** 
+In this section there are all the maps that we replicated and, previously, the codes we used to obtained them. 
+
+We are calling the libraries we will use.
+
+```{r setup, message=FALSE, warning=FALSE}
+library(sf)
+library(spData)
+library(foreign)
+library(tidyverse)
+
+setwd("C:/Users/Enzo/Documents/BSE/T2/GEOSPATIAL_SPATIAL_MODELS/S03/HW")
+
+path <- getwd()
+path_data <- file.path(path, "data") 
+```
+
+## **Hydro dams in South Africa**
+## **Districts and electricity grid in Ethiopia**
+## **Population in Brazil's meso-regions**
+## **Vietnam's road infrastructure by road type**
+## **Brazil's capital and main road infrastructure**
+```{r setup, message=FALSE, warning=FALSE}
+sf.brazil <- st_read(paste0(path_data, "/p5/SNV_202001A.shp"))
+summary(sf.brazil)
+
+# View the first few rows of the attribute table
+head(sf.brazil)
+
+# Plot the shapefile
+plot(sf.brazil)
+```
