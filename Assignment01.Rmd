@@ -44,16 +44,21 @@ setwd("C:/Users/Enzo/Documents/BSE/T2/GEOSPATIAL_SPATIAL_MODELS/S03/HW")
 path <- getwd()
 path_data <- file.path(path, "data") 
 ```
-## **Hydro dams in South Africa**
-From [@mettetal2019],
-## **Districts and electricity grid in Ethiopia**
-From [@fried2021],
-## **Population in Brazil's meso-regions**
-From [@pellegrina2021],
-## **Vietnam's road infrastructure by road type**
-From [@balboni2019],
-## **Brazil's capital and main road infrastructure**
+## Hydro dams in South Africa
+From [@mettetal2019].
+
+## Districts and electricity grid in Ethiopia
+From [@fried2021].
+
+## Population in Brazil’s meso-regions
+From [@pellegrina2021].
+
+## Vietnam’s road infrastructure by road type
+From [@balboni2019].
+
+## Brazil’s capital and main road infrastructure
 The next figure is a map of the Brazilian road network indicating Brasilia and the 26 state capitals ([@morten2018]). It shows the highway network in 2000 separating radial highways from nonradial highways.
+
 ```{r data-load, message=FALSE, warning=FALSE}
 sink(tempfile()) 
 
