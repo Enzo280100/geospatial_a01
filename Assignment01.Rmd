@@ -27,10 +27,21 @@ We are calling the libraries we will use.
 library(sf)
 library(spData)
 library(foreign)
+library(ggrepel)
 library(tidyverse)
 
-setwd("C:/Users/Enzo/Documents/BSE/T2/GEOSPATIAL_SPATIAL_MODELS/S03/HW")
+no_axis <- theme(axis.title=element_blank(),
+                 axis.text=element_blank(),
+                 axis.ticks=element_blank())
 
+no_axis_legend <- theme(axis.title=element_blank(),
+                        axis.text=element_blank(),
+                        axis.ticks=element_blank(), legend.position="bottom")
+
+loop_list <- c("uf1940","meso")
+
+
+setwd("C:/Users/Enzo/Documents/BSE/T2/GEOSPATIAL_SPATIAL_MODELS/S03/HW")
 path <- getwd()
 path_data <- file.path(path, "data") 
 ```
@@ -40,13 +51,44 @@ path_data <- file.path(path, "data")
 ## **Population in Brazil's meso-regions**
 ## **Vietnam's road infrastructure by road type**
 ## **Brazil's capital and main road infrastructure**
-```{r setup, message=FALSE, warning=FALSE}
-sf.brazil <- st_read(paste0(path_data, "/p5/SNV_202001A.shp"))
-summary(sf.brazil)
 
-# View the first few rows of the attribute table
-head(sf.brazil)
+The next figure is a map of the Brazilian road network indicating Brasilia and the 26 state capitals. It shows the highway network in 2000 separating radial highways from nonradial highways.
+```{r data-load, message=FALSE, warning=FALSE}
+sink(tempfile()) 
 
-# Plot the shapefile
-plot(sf.brazil)
+# Location of each state
+states <- st_read(file.path(path_data,"/p5/data/gis_data/uf1940/uf1940_prj.shp"))
+sf.states  <- rmapshaper::ms_simplify(states, keep=0.01, keep_shapes=TRUE)
+
+# Information about roads
+year  <- 2000
+file_name = paste0(path_data, "/p5/data/gis_data/roads/", year,"/highways_", year, "_prj.shp")
+all_highways <- st_read(file_name)
+sf.roads  <- rmapshaper::ms_simplify(all_highways, keep=0.01, keep_shapes=TRUE)
+
+# Minimum spanning tree (mst_pie)
+mst_pie <- st_read(file.path(path_data, "/p5/data/gis_data/mst/mst_pie_prj.shp"))
+sf.mst  <- rmapshaper::ms_simplify(mst_pie, keep=0.01, keep_shapes=TRUE)
+
+# Cities in Brazil
+capital_cities <- st_read(file.path(path_data,"/p5/data/gis_data/cities/brazil_capital_cities_prj.shp"))
+cities_xy <- cbind(capital_cities, st_coordinates(capital_cities))
+
+sink() 
+
+# Figure
+ggplot() +
+  geom_sf(data=sf.states, fill="white", color="grey90") +
+  geom_sf(data=sf.mst, size=.8, linetype = "11", aes(color = "Minimum spanning tree"), show.legend = "line")   +
+  geom_sf(data=sf.roads %>% filter(dm_anlys_p==1 & dm_radial==0), size=.6, linetype = "dashed", aes(color = "Non-radial highways (2000)"), show.legend = "line") +
+  geom_sf(data=sf.roads %>% filter(dm_anlys_p==1 & dm_radial==1), size=.9, aes(color = "Radial highways (2000)"), show.legend = "line") +
+  theme_minimal() +
+  no_axis +
+  geom_point(data=cities_xy,aes(x=X,y=Y)) +
+  geom_text_repel(data=cities_xy,aes(x=X,y=Y,label=CITY_NAME)) +
+  labs(color = " ") +
+  scale_color_manual(values=c("#777676","#868686","#565555"),
+                     guide = guide_legend(override.aes = list(linetype = c("11", "dashed", "solid"))))
 ```
+
+# References
