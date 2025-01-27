@@ -233,9 +233,77 @@ ggplot() +
 
 From [@pellegrina2021].
 
+#installing required packages
+library(geobr)      
+library(sf)         
+library(ggplot2)    
+library(dplyr)      
+library(tidyverse)  
+library(readxl)     
+
+# Loading census data obtained online for the requried years (ibge.gov.br)
+file_path <- "census_data.xlsx"
+df <- read_excel(file_path, sheet = 1)
+
+# Checking column names
+colnames(df)
+
+# Renaming for consistency
+df <- df %>%
+  rename(name_state= Region)
+
+head(df)
+
+# Loading Meso-Region boundaries using geobr package (geo-spatial data) 
+brazil_map <- read_meso_region(year = 2010)  # Most recent meso-region boundaries
+head(brazil_map)
+
+# Aggregating meso-regions to the state level for simplicity
+brazil_states <- brazil_map %>%
+  group_by(name_state) %>%
+  summarise(geom = st_union(geom)) %>%
+  left_join(df, by = "name_state")  # Merge with population data
+
+head(brazil_states)
+
+# Define North & Central-West states as "West"
+west_states <- c("Amazonas", "Pará", "Acre", "Amapá", "Roraima", "Rondônia", "Tocantins",
+                 "Mato Grosso", "Mato Grosso do Sul", "Goiás", "Distrito Federal")
+
+# Extract only the "West" meso-regions (as done in paper)
+west_map <- brazil_map %>%
+  filter(name_state %in% west_states) %>%
+  group_by(name_state) %>%
+  summarise(geom = st_union(geom))
+
+colnames(brazil_states)
+
+#plotting maps
+plot_map <- function(year) {
+  ggplot() +
+    geom_sf(data = brazil_states, aes(fill = .data[[year]]), color = "black") +  
+    geom_sf(data = west_map, fill = NA, color = "red", size = 1) +  # Red contour for "West"
+    scale_fill_gradient(low = "lightblue", high = "blue", na.value = "white") +  # Light for low, dark for high
+    labs(title = paste("Population Distribution in", year),
+         fill = "Population") +
+    theme_minimal()
+}
+
+print(plot_map("1950"))
+print(plot_map("1980"))
+print(plot_map("2010"))
+
+
 ## Vietnam’s road infrastructure by road type
 
 From [@balboni2019].
+
+
+
+
+
+
+
 
 ## Brazil’s capital and main road infrastructure
 
@@ -300,4 +368,8 @@ ggplot() +
 #Electricity Grid: <https://datacatalog.worldbank.org/search/dataset/0039311>
 
 # Figure 3
+
+#Census data: https://www.ibge.gov.br/en/statistics/social/population/18391-2010-population-census.html?edicao=19729&t=downloads
+
+# Figure 5
 #https://www.openicpsr.org/openicpsr/project/183316/version/V1/view?path=/openicpsr/183316/fcr:versions/V1/Data/GIS_data&type=folder
