@@ -355,7 +355,7 @@ ggplot() +
 
 #Dam data: <https://www.globaldamwatch.org/database>
 
-#River Order Flow: <https://www.hydrosheds.org/>
+#River Order Flow: <https://www.hydrosheds.org/products/hydrorivers>
 
 # Figure 2
 
