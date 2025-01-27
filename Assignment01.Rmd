@@ -298,3 +298,6 @@ ggplot() +
 #Population: <https://data.humdata.org/dataset/cod-ps-eth>
 
 #Electricity Grid: <https://datacatalog.worldbank.org/search/dataset/0039311>
+
+# Figure 3
+#https://www.openicpsr.org/openicpsr/project/183316/version/V1/view?path=/openicpsr/183316/fcr:versions/V1/Data/GIS_data&type=folder
