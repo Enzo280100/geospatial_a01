@@ -218,7 +218,7 @@ joined_pop_geo$pupulation_density <- log(joined_pop_geo$T_TL / joined_pop_geo$Sh
 #Plotting:
 ggplot() +
   geom_sf(data = joined_pop_geo, aes(fill = pupulation_density)) +  # Map the T_TL column to fill color
-  scale_fill_gradient(low = "aliceblue", high = "midnightblue", name = "Population Density") +
+  scale_fill_gradient(low = "aliceblue", high = "midnightblue", name = "Population Density Log Scale") +
   geom_sf(data = roads_geo, color = "black", size = 2) +
   geom_sf(data = lines_geo, color = "red", size = 0.5) +
   geom_point(data = enum, aes(x = LON_DD_MOD, y = LAT_DD_MOD), color = "black", fill = "white", size = 1, shape = 21) +
