@@ -212,6 +212,7 @@ ggplot() +
 
 From [@pellegrina2021].
 
+```{r data-load, message=FALSE, warning=FALSE}
 #installing required packages library(geobr)\
 library(sf)\
 library(ggplot2)\
@@ -268,6 +269,7 @@ paste("Population Distribution in", year), fill = "Population") +
 theme_minimal() }
 
 print(plot_map("1950")) print(plot_map("1980")) print(plot_map("2010"))
+```
 
 ## Vietnam’s road infrastructure by road type
 
