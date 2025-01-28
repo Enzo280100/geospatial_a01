@@ -235,6 +235,8 @@ ggplot() +
 
 From [@pellegrina2021].
 
+The following plot is the reproduction of population distribution maps similar to those in Pellegrina & Sotelo (2021), “Migration, Specialization, and Trade: Evidence from Brazil’s March to the West.” The plot contains population counts for different periods (1950, 1980, and 2010) in Brazil's meso-regions (or districts). The data for all periods is taken from IBGE website, and used with meso-region shapefiles from geobr package. 
+
 ```{r data-load, message=FALSE, warning=FALSE}
 #installing required packages library(geobr)\
 library(sf)\
@@ -283,7 +285,9 @@ group_by(name_state) %\>% summarise(geom = st_union(geom))
 
 colnames(brazil_states)
 
-#plotting maps plot_map \<- function(year) { ggplot() + geom_sf(data =
+#plotting maps
+
+plot_map \<- function(year) { ggplot() + geom_sf(data =
 brazil_states, aes(fill = .data[[year]]), color = "black") +\
 geom_sf(data = west_map, fill = NA, color = "red", size = 1) + \# Red
 contour for "West" scale_fill_gradient(low = "lightblue", high = "blue",
