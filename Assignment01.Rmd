@@ -273,6 +273,7 @@ print(plot_map("1950")) print(plot_map("1980")) print(plot_map("2010"))
 
 From [@balboni2019].
 
+```{r data-load, message=FALSE, warning=FALSE}
 library(sf)        # Spatial data handling
 library(ggplot2)   # For visualization
 library(tmap)      # Thematic mapping
@@ -337,7 +338,7 @@ ggsave("Vietnam_Road_Network_2015.png", road_map_2015, width = 10, height = 6, d
 
 # Displaying the map
 print(road_map_2015)
-
+```
 
 ## Brazil’s capital and main road infrastructure
 
