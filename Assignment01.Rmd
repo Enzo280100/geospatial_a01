@@ -273,6 +273,72 @@ print(plot_map("1950")) print(plot_map("1980")) print(plot_map("2010"))
 
 From [@balboni2019].
 
+library(sf)        # Spatial data handling
+library(ggplot2)   # For visualization
+library(tmap)      # Thematic mapping
+library(dplyr)     # Data manipulation
+library(readr)     # Read CSV files
+library(cowplot)   # For arranging multiple plots
+library(osmdata)  # To extract historical OSM data
+library(stringr)   # For handling text data
+
+# Path to the extracted shape file
+shp_path <- "/Users/tarangkadyan/Downloads/vnm_rdsl_2015_osm"
+roads <- st_read(shp_path)
+
+# Viewing column names to check available attributes
+colnames(roads)
+
+# Previewing the first few rows
+head(roads)
+
+# Counting the number of unique road types
+unique_road_types <- unique(roads$type)
+print(unique_road_types)
+
+# Defining road type categories
+# Reclassifing road types
+roads <- roads %>%
+  mutate(road_category = case_when(
+    type %in% c("motorway", "motorway_link", "trunk", "trunk_link") ~ "Freeway",
+    type %in% c("primary", "primary_link") ~ "Dual carriageway",
+    type %in% c("secondary", "secondary_link", "tertiary", "tertiary_link") ~ "Major roads",
+    type %in% c("residential", "unclassified", "service", "living_street", "pedestrian") ~ "Minor roads",
+    type %in% c("footway", "path", "track", "cycleway", "steps", "proposed", "construction", "crossing", "services", "rest_area") ~ "Other roads",
+    TRUE ~ "Other roads"  # Default for unknown categories
+  ))
+
+# Checking classification counts
+table(roads$road_category)
+
+road_colors <- c(
+  "Freeway" = "blue",
+  "Dual carriageway" = "black",
+  "Major roads" = "red",
+  "Minor roads" = "orange",
+  "Other roads" = "lightgoldenrod"
+)
+
+# Defining function for plotting road networks
+plot_roads <- function(road_data, title_text) {
+  ggplot() +
+    geom_sf(data = road_data, aes(color = road_category), size = 0.4, show.legend = TRUE) +
+    scale_color_manual(values = road_colors) +
+    labs(title = title_text, color = "Road types") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+}
+
+# Generating the road network map for 2015
+road_map_2015 <- plot_roads(roads, "Vietnam Road Network (2015)")
+
+# Saving the plot as PNG
+ggsave("Vietnam_Road_Network_2015.png", road_map_2015, width = 10, height = 6, dpi = 300, bg='white')
+
+# Displaying the map
+print(road_map_2015)
+
+
 ## Brazil’s capital and main road infrastructure
 
 The next figure is a map of the Brazilian road network indicating
