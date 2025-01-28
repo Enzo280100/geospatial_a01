@@ -1,6 +1,6 @@
 ---
 title: "**Geospatial Data Sciences and Economic Spatial Models**  \n_Assignment 01_\n"
-author: "**1. Alejandro Delgado**  \n**2. Enzo Infantes**  \n**3. Tarang Kadyan**\n"
+author: "**1. Alejandro Delgado**  \n**2. Enzo Infantes**  \n**3. Tarang Kadyan**\n**4. Matias Borrell"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -11,17 +11,23 @@ output:
     toc: false
 bibliography: references.bib
 csl: apa.csl 
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ![](C:/Users/Enzo/Pictures/bse_logo.png){width="50%"}
 
 # **Introducction**
 
-For this document, we are going to replicate maps in academic publications/working papers in economics. The main goal of this work is to put in practice the sf tools to work with vector data.
+For this document, we are going to replicate maps in academic
+publications/working papers in economics. The main goal of this work is
+to put in practice the sf tools to work with vector data.
 
 # **Development**
 
-In this section there are all the maps that we replicated and, previously, the codes we used to obtained them.
+In this section there are all the maps that we replicated and,
+previously, the codes we used to obtained them.
 
 We are calling the libraries we will use.
 
@@ -139,93 +145,66 @@ From [@fried2021].
 
 ```{r setup, message=FALSE, warning=FALSE}
 
-# Adding Country districts shapefile
-shapefile_path_figure2 <- "C:/Users/aleja/OneDrive/Escritorio/Term_2/Geospatial/Homework_1/paper_2/country/gadm41_ETH_3.shp"
-# Load the shapefile
-shp_data_eth <- st_read(shapefile_path_figure2)
+###Administrative boundaries
+#Load ETH adm 3 shapefile:
+sf.eth_admin_3 <- st_read('~/Desktop/Assig_1/adm_3/eth_admbnda_adm3_csa_bofedb_2021.shp')
 
-# Adding Roads
-shapefile_path_roads <-  "C:/Users/aleja/OneDrive/Escritorio/Term_2/Geospatial/Homework_1/paper_2/roads_2/Ethiopia_Roads.shp"
-# Read the shapefile
-roads_data <- st_read(shapefile_path_roads)
+###Population Density
+#Population density data (https://data.humdata.org/dataset/cod-ps-eth)
+eth_pop <- read.csv("~/Desktop/Assig_1/pop_adm3_2022_v2.csv")
 
-# Adding Population data
-# Define the file path
-file_path <- "C:/Users/aleja/OneDrive/Escritorio/Term_2/Geospatial/Homework_1/paper_2/population/eth_admpop_2023.xlsx"
-# Read the specific sheet
-data_adm3 <- read_excel(file_path, sheet = "ETH_admpop_adm3_2023")
+#Joining
+if (!("ADM3_PCODE" %in% colnames(eth_pop))) {
+  eth_pop <- rename(eth_pop, ADM3_PCODE = admin3Pcode) 
+}
 
-#We couldn't find a shape file with population per district included, so here we
-# are merging the shp data set with data_adm3 which contains per district population
-# data. We also handle missing values.
-
-# Create the new column CC_3 by extracting numbers after 'ET' in the admin3Pcode column
-data_adm3 <- data_adm3 %>%
-  mutate(CC_3 = gsub("ET", "", admin3Pcode))
-# Merge the Total column from data_adm3 into shp_data_eth using CC_3 as the key
-shp_data_eth <- shp_data_eth %>%
-  left_join(data_adm3 %>% select(CC_3, Total), by = "CC_3")
-
-#Creating population density
-# In order to get population density we use st_area() function to get the total
-# area of the district.
-# Calculate area in square kilometers
-shp_data_eth$area_km2 <- as.numeric(st_area(shp_data_eth) / 1e6)
-# Create the population density column
-shp_data_eth$population_density <- shp_data_eth$Total / shp_data_eth$area_km2
-# Handling missing
-shp_data_eth$population_density[is.na(shp_data_eth$population_density)] <- 0
+# Join the data on ADM3_PCODE:
+joined_pop_geo <- left_join(sf.eth_admin_3, eth_pop, by = "ADM3_PCODE")
 
 
-# Adding Electricity data
-# Define the file path
-file_path <- "C:/Users/aleja/OneDrive/Escritorio/Term_2/Geospatial/Homework_1/paper_2/electricity_grid/Ethiopia Electricity Transmission Network.shp"
-# Read the shapefile
-ethiopia_grid <- st_read(file_path)
-# Calculate intersections of red lines (to add bolts)
-intersections <- st_intersection(ethiopia_grid)
+###Main Roads
+#Road data 
+sf.roads <- st_read("~/Desktop/Assig_1/roads_2/Ethiopia_Roads.shp")
 
-# Plot the map
+# Convert the geometry column to an sf object
+roads_geo <- st_as_sf(sf.roads, wkt = "geometry", crs = 4326)
+roads_geo <- roads_geo %>% filter(LINKNO != "A5-5")
+
+
+###Electricity lines
+#Power lines data
+sf.lines <- st_read("~/Desktop/Assig_1/electricity_grid/Ethiopia Electricity Transmission Network.shp")
+
+# Convert the geometry column to an sf object
+lines_geo <- st_as_sf(sf.lines, wkt = "geometry", crs = 4326)
+
+
+###Enumeration localities
+#Enumerators Data (https://microdata.worldbank.org/index.php/catalog/2053/data-dictionary)
+enum <- read.csv("~/Desktop/Assig_1/erss_survey/pub_eth_householdgeovariables_y1.csv")
+
+###Power Plants
+
+#Power plants data (https://datacatalog.worldbank.org/search/dataset/0041714/Ethiopia-Power-Plants)
+plants <- st_read("~/Desktop/Assig_1/eth_powerplants/ETH_PowerPlants.shp")
+plants_geo <- st_set_crs(plants, 4326)
+
+#Adding Population Density Column
+joined_pop_geo$pupulation_density <- log(joined_pop_geo$T_TL / joined_pop_geo$Shape_Area)
+
+#Plotting:
 ggplot() +
-  # Add the Ethiopia shapefile with fill based on population density
-  geom_sf(data = shp_data_eth, aes(fill = population_density), color = "gray80") +
-  
-  # Add the electricity transmission network (red lines)
-  geom_sf(data = ethiopia_grid, color = "red", size = 4) +
-  
-  # Add lightning bolts at intersections (red)
-  geom_sf(data = intersections, color = "red", size = 3, shape = "\u26A1") +  # Unicode for ⚡ symbol
-  
-  # Add the roads data as an overlay with black lines
-  geom_sf(data = roads_data, color = "black", size = 5) +
-  
-  # Set a minimal theme
-  theme_minimal() +
-  
-  # Add a sequential color scale with limits set to 0–300
-  scale_fill_gradient(
-    low = "lightblue", 
-    high = "darkblue", 
-    name = "Population Density\n(people/km²)",
-    limits = c(0, 300),    # Set the gradient range between 0 and 300
-    oob = scales::squish  # Squeeze values > 300 into the max color
-  ) +
-  
-  # Add labels and improve visualization
-  labs(
-    caption = "Source: GADM.org, OCHA and World Bank data"
-  ) +
-  
-  # Customize the theme for better aesthetics
+  geom_sf(data = joined_pop_geo, aes(fill = pupulation_density)) +  # Map the T_TL column to fill color
+  scale_fill_gradient(low = "aliceblue", high = "midnightblue", name = "Population Density") +
+  geom_sf(data = roads_geo, color = "black", size = 2) +
+  geom_sf(data = lines_geo, color = "red", size = 0.5) +
+  geom_point(data = enum, aes(x = LON_DD_MOD, y = LAT_DD_MOD), color = "black", fill = "white", size = 1, shape = 21) +
+  geom_point(data = plants_geo, aes(x=LON, y=LAT), shape = 5, color = "blue") +
   theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    plot.subtitle = element_text(size = 12),
-    plot.caption = element_text(size = 10, face = "italic"),
-    legend.position = "none",  # Remove legend
-    axis.text = element_blank(),         # Remove axis text
-    axis.ticks = element_blank(),        # Remove axis ticks
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
     axis.title = element_blank(),
-    panel.grid = element_blank()     
+    panel.grid = element_blank()
   )
 ```
 
@@ -233,81 +212,72 @@ ggplot() +
 
 From [@pellegrina2021].
 
-#installing required packages
-library(geobr)      
-library(sf)         
-library(ggplot2)    
-library(dplyr)      
-library(tidyverse)  
-library(readxl)     
+#installing required packages library(geobr)\
+library(sf)\
+library(ggplot2)\
+library(dplyr)\
+library(tidyverse)\
+library(readxl)
 
 # Loading census data obtained online for the requried years (ibge.gov.br)
-file_path <- "census_data.xlsx"
-df <- read_excel(file_path, sheet = 1)
+
+file_path \<- "census_data.xlsx" df \<- read_excel(file_path, sheet = 1)
 
 # Checking column names
+
 colnames(df)
 
 # Renaming for consistency
-df <- df %>%
-  rename(name_state= Region)
+
+df \<- df %\>% rename(name_state= Region)
 
 head(df)
 
-# Loading Meso-Region boundaries using geobr package (geo-spatial data) 
-brazil_map <- read_meso_region(year = 2010)  # Most recent meso-region boundaries
-head(brazil_map)
+# Loading Meso-Region boundaries using geobr package (geo-spatial data)
+
+brazil_map \<- read_meso_region(year = 2010) \# Most recent meso-region
+boundaries head(brazil_map)
 
 # Aggregating meso-regions to the state level for simplicity
-brazil_states <- brazil_map %>%
-  group_by(name_state) %>%
-  summarise(geom = st_union(geom)) %>%
-  left_join(df, by = "name_state")  # Merge with population data
+
+brazil_states \<- brazil_map %\>% group_by(name_state) %\>%
+summarise(geom = st_union(geom)) %\>% left_join(df, by = "name_state")
+\# Merge with population data
 
 head(brazil_states)
 
 # Define North & Central-West states as "West"
-west_states <- c("Amazonas", "Pará", "Acre", "Amapá", "Roraima", "Rondônia", "Tocantins",
-                 "Mato Grosso", "Mato Grosso do Sul", "Goiás", "Distrito Federal")
+
+west_states \<- c("Amazonas", "Pará", "Acre", "Amapá", "Roraima",
+"Rondônia", "Tocantins", "Mato Grosso", "Mato Grosso do Sul", "Goiás",
+"Distrito Federal")
 
 # Extract only the "West" meso-regions (as done in paper)
-west_map <- brazil_map %>%
-  filter(name_state %in% west_states) %>%
-  group_by(name_state) %>%
-  summarise(geom = st_union(geom))
+
+west_map \<- brazil_map %\>% filter(name_state %in% west_states) %\>%
+group_by(name_state) %\>% summarise(geom = st_union(geom))
 
 colnames(brazil_states)
 
-#plotting maps
-plot_map <- function(year) {
-  ggplot() +
-    geom_sf(data = brazil_states, aes(fill = .data[[year]]), color = "black") +  
-    geom_sf(data = west_map, fill = NA, color = "red", size = 1) +  # Red contour for "West"
-    scale_fill_gradient(low = "lightblue", high = "blue", na.value = "white") +  # Light for low, dark for high
-    labs(title = paste("Population Distribution in", year),
-         fill = "Population") +
-    theme_minimal()
-}
+#plotting maps plot_map \<- function(year) { ggplot() + geom_sf(data =
+brazil_states, aes(fill = .data[[year]]), color = "black") +\
+geom_sf(data = west_map, fill = NA, color = "red", size = 1) + \# Red
+contour for "West" scale_fill_gradient(low = "lightblue", high = "blue",
+na.value = "white") + \# Light for low, dark for high labs(title =
+paste("Population Distribution in", year), fill = "Population") +
+theme_minimal() }
 
-print(plot_map("1950"))
-print(plot_map("1980"))
-print(plot_map("2010"))
-
+print(plot_map("1950")) print(plot_map("1980")) print(plot_map("2010"))
 
 ## Vietnam’s road infrastructure by road type
 
 From [@balboni2019].
 
-
-
-
-
-
-
-
 ## Brazil’s capital and main road infrastructure
 
-The next figure is a map of the Brazilian road network indicating Brasilia and the 26 state capitals ([@morten2018]). It shows the highway network in 2000 separating radial highways from nonradial highways.
+The next figure is a map of the Brazilian road network indicating
+Brasilia and the 26 state capitals ([@morten2018]). It shows the highway
+network in 2000 separating radial highways from nonradial highways.
 
 ```{r data-load, message=FALSE, warning=FALSE}
 sink(tempfile()) 
@@ -351,7 +321,8 @@ ggplot() +
 
 # Figure 1
 
-#Shape of Country with districts: <https://gadm.org/download_country.html>
+#Shape of Country with districts:
+<https://gadm.org/download_country.html>
 
 #Dam data: <https://www.globaldamwatch.org/database>
 
@@ -359,17 +330,28 @@ ggplot() +
 
 # Figure 2
 
-#Shape of Country with districts: <https://gadm.org/download_country.html>
+#Shape of Country with districts:
+<https://gadm.org/download_country.html>
 
-#Roads: <https://datacatalog.worldbank.org/search/dataset/0039933/Ethiopia-Roads>
+#Roads:
+<https://datacatalog.worldbank.org/search/dataset/0039933/Ethiopia-Roads>
 
 #Population: <https://data.humdata.org/dataset/cod-ps-eth>
 
-#Electricity Grid: <https://datacatalog.worldbank.org/search/dataset/0039311>
+#Electricity Grid:
+<https://datacatalog.worldbank.org/search/dataset/0039311>
+
+#Enumerators:
+<https://microdata.worldbank.org/index.php/catalog/2053/data-dictionary>
+
+#Power Plants:
+<https://datacatalog.worldbank.org/search/dataset/0041714/Ethiopia-Power-Plants>
 
 # Figure 3
 
-#Census data: https://www.ibge.gov.br/en/statistics/social/population/18391-2010-population-census.html?edicao=19729&t=downloads
+#Census data:
+<https://www.ibge.gov.br/en/statistics/social/population/18391-2010-population-census.html?edicao=19729&t=downloads>
 
 # Figure 5
-#https://www.openicpsr.org/openicpsr/project/183316/version/V1/view?path=/openicpsr/183316/fcr:versions/V1/Data/GIS_data&type=folder
+
+\#<https://www.openicpsr.org/openicpsr/project/183316/version/V1/view?path=/openicpsr/183316/fcr:versions/V1/Data/GIS_data&type=folder>
