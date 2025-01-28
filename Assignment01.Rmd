@@ -71,65 +71,78 @@ For river gradient data, we were unable to access the exact dataset used by the 
 
 ```{r setup, message=FALSE, warning=FALSE}
 # Adding country districts
-
 shapefile_path <- "C:/Users/aleja/OneDrive/Escritorio/Term_2/Geospatial/Homework_1/paper_1/Country/gadm41_ZAF_3.shp"
+
 # Load the shapefile
 shp_data <- st_read(shapefile_path)
 
 # Adding Dams
-
 dam_path <- "C:/Users/aleja/OneDrive/Escritorio/Term_2/Geospatial/Homework_1/paper_1/Dams/GDW_barriers_v1_0.shp"
 shp_dam_data <- st_read(dam_path)
+
 # Filter the sf object for South Africa
 shp_dam_data_filtered <- shp_dam_data[shp_dam_data$COUNTRY == "South Africa", ]
 
 # Adding River Gradients
-
 river_path <- "C:\\Users\\aleja\\OneDrive\\Escritorio\\Term_2\\Geospatial\\Homework_1\\paper_1\\Rivers\\HydroRIVERS_v10_af.shp"
 shp_river_data <- st_read(river_path)
-# Transform all layers to  WGS 84)
+
+# Transform all layers to WGS 84
 shp_data <- st_transform(shp_data, crs = 4326)
 shp_dam_data_filtered <- st_transform(shp_dam_data_filtered, crs = 4326)
 shp_river_data <- st_transform(shp_river_data, crs = 4326)
+
 # Filter river data
 # We couldn't find River Gradient data so we will be using river flow as a proxy
 # Creating a bounding box to improve code speed (via filtering)
 # Define the bounding box for South Africa
-south_africa_bbox <- st_bbox(c(xmin = 16.45, ymin = -34.84, xmax = 32.89, ymax = -22.13), crs = 4326)
+south_africa_bbox <- st_bbox(
+  c(xmin = 16.45, ymin = -34.84, xmax = 32.89, ymax = -22.13),
+  crs = 4326
+)
+
 # Crop the river data using the bounding box
 filtered_rivers <- st_crop(shp_river_data, south_africa_bbox)
+
 # Simplify the geometry of filtered_rivers
 # We simplify the geometry here in order to improve code speed
 filtered_rivers_simplified <- st_simplify(filtered_rivers, dTolerance = 0.1)
+
 # Perform spatial join with simplified rivers
-shp_with_rivers <- st_join(shp_data, filtered_rivers_simplified, join = st_intersects)
+shp_with_rivers <- st_join(
+  shp_data,
+  filtered_rivers_simplified,
+  join = st_intersects
+)
+
 # Calculate average ORD_FLOW grouped by NAME_3 (District Name)
 average_ord_flow <- shp_with_rivers %>%
   st_drop_geometry() %>%  # Drop geometry to speed up summarization
   group_by(NAME_3) %>%
   summarize(avg_ord_flow = mean(ORD_FLOW, na.rm = TRUE))
+
 # Merge the average ORD_FLOW back into shp_data
 shp_data <- shp_data %>%
   left_join(average_ord_flow, by = "NAME_3")
 
-# Note: Order flow data indicates the order of the rivers in term of their flows,
-# meaning that lower values indicate that a river is classified as having more flow
-# thus less order flow in our data = more river gradient (proxy).
+# Note: Order flow data indicates the order of the rivers in terms of their flows,
+# meaning that lower values indicate that a river is classified as having more flow.
+# Thus, less order flow in our data = more river gradient (proxy).
 
 ##### Figure 1 plot ########
-
 ggplot() +
   # Plot shp_data, filled by avg_ord_flow
   geom_sf(data = shp_data, aes(fill = avg_ord_flow), color = "black", size = 0.1) +
   
   # Plot dam data
-  geom_sf(data = shp_dam_data_filtered, size = 0.7, color="blue", fill = "blue") +
+  geom_sf(data = shp_dam_data_filtered, size = 0.7, color = "blue", fill = "blue") +
   
   # Color scale for avg_ord_flow
   scale_fill_viridis_c(
     option = "plasma",
     begin = 0.1,
-    na.value = "grey90") +
+    na.value = "grey90"
+  ) +
   
   # Add labels and theme
   labs(
@@ -137,7 +150,7 @@ ggplot() +
     caption = "Notes: Each light blue dot indicates the location of a dam. The shading
     reflects the average river flow within the district"
   ) +
-  theme_minimal()+
+  theme_minimal() +
   theme(
     axis.title = element_blank(),    # Remove axis titles
     axis.text = element_blank(),     # Remove axis text (tick labels)
@@ -430,7 +443,8 @@ ggplot() +
 
 # Figure 4
 
-Road Network Type: https://data.humdata.org/dataset/viet-nam-roads
+#Road Network Type: 
+#https://data.humdata.org/dataset/viet-nam-roads
 
 # Figure 5
 
