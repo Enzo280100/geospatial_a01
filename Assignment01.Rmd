@@ -62,6 +62,13 @@ path_data <- file.path(path, "data")
 
 From [@mettetal2019].
 
+This map illustrates dam locations and the average river gradient by district in South Africa.
+To create the map, we used district-level data from GADM.org (link in the references). It is worth noting that the GADM district data differs from the dataset used in the referenced paper, as South African district boundaries have undergone changes in 2000 and again between 2016–2021. Therefore, we relied on updated district boundaries for this analysis.
+
+Dam locations were sourced from globaldamwatch.org, with each blue point on the map representing a dam.
+
+For river gradient data, we were unable to access the exact dataset used by the original authors. Instead, we used river flow data from hydrosheds.org as a proxy. Using a bounding box, we filtered for rivers within South Africa and calculated the average river flow within each district via a spatial join. As demonstrated in the final map, this proxy closely approximates the river gradient results presented by the original authors.
+
 ```{r setup, message=FALSE, warning=FALSE}
 # Adding country districts
 
