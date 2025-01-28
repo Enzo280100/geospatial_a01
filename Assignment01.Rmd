@@ -421,6 +421,10 @@ ggplot() +
 #Census data:
 <https://www.ibge.gov.br/en/statistics/social/population/18391-2010-population-census.html?edicao=19729&t=downloads>
 
+# Figure 4
+
+Road Network Type: https://data.humdata.org/dataset/viet-nam-roads
+
 # Figure 5
 
 \#<https://www.openicpsr.org/openicpsr/project/183316/version/V1/view?path=/openicpsr/183316/fcr:versions/V1/Data/GIS_data&type=folder>
