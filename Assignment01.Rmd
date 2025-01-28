@@ -163,6 +163,9 @@ ggplot() +
 
 From [@fried2021].
 
+The map is composed of multiple layers of information within the Ethiopia region, the first of which is its administrative boundaries based on a level of detail 3. The second is population density data. These are joined in the common column ADM3_PCODE.
+
+The third layer is Ethiopia's main roads. The fourth layer is its power lines and the fifth is its enumerators by location provided by World Bank data.
 ```{r setup, message=FALSE, warning=FALSE}
 
 ###Administrative boundaries
